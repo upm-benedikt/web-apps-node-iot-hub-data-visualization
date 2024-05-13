@@ -12,19 +12,19 @@ $(document).ready(() => {
       this.deviceId = deviceId;
       this.maxLen = 50;
       this.timeData = new Array(this.maxLen);
-      this.DangerData = new Array(this.maxLen);
-      this.AirQualityData = new Array(this.maxLen);
+      this.phData = new Array(this.maxLen);
+      this.precipitateData = new Array(this.maxLen);
     }
 
-    addData(time, Danger, AirQualityIndex) {
+    addData(time, AirQualityIndex, Danger) {
       this.timeData.push(time);
-      this.DangerData.push(Danger || null);
-      this.AirQualityData.push(AirQualityIndex);
+      this.AirData.push(ph);
+      this.DangerData.push(precipitate);
 
       if (this.timeData.length > this.maxLen) {
         this.timeData.shift();
+        this.AirData.shift();
         this.DangerData.shift();
-        this.AirQualityData.shift();
       }
     }
   }
@@ -58,8 +58,8 @@ $(document).ready(() => {
     datasets: [
       {
         fill: false,
-        label: 'Danger',
-        yAxisID: 'bool',
+        label: 'Air',
+        yAxisID: 'Air',
         borderColor: 'rgba(255, 204, 0, 1)',
         pointBoarderColor: 'rgba(255, 204, 0, 1)',
         backgroundColor: 'rgba(255, 204, 0, 0.4)',
@@ -69,13 +69,13 @@ $(document).ready(() => {
       },
       {
         fill: false,
-        label: 'Air-Quality',
-        yAxisID: 'Air-Quality',
-        borderColor: 'rgba(24, 120, 240, 1)',
-        pointBoarderColor: 'rgba(24, 120, 240, 1)',
-        backgroundColor: 'rgba(24, 120, 240, 0.4)',
-        pointHoverBackgroundColor: 'rgba(24, 120, 240, 1)',
-        pointHoverBorderColor: 'rgba(24, 120, 240, 1)',
+        label: 'Danger',
+        yAxisID: 'Danger',
+        borderColor: 'rgba(0, 0, 254, 1)',
+        pointBoarderColor: 'rgba(0, 0, 254, 1)',
+        backgroundColor: 'rgba(0, 0, 254, 1)',
+        pointHoverBackgroundColor: 'rgba(0, 0, 254, 1)',
+        pointHoverBorderColor: 'rgba(0, 0, 254, 1)',
         spanGaps: true,
       }
     ]
@@ -84,22 +84,22 @@ $(document).ready(() => {
   const chartOptions = {
     scales: {
       yAxes: [{
-        id: 'Danger',
+        id: 'Air',
         type: 'linear',
         scaleLabel: {
-          labelString: 'Danger (ºC)',
+          labelString: 'Air',
           display: true,
         },
         position: 'left',
       },
       {
-        id: 'Air-Quality',
+        id: 'Danger',
         type: 'linear',
         scaleLabel: {
-          labelString: 'Air-Quality (AQI)',
+          labelString: 'Danger',
           display: true,
         },
-        position: 'right',
+        position: 'left',
       }]
     }
   };
@@ -122,8 +122,8 @@ $(document).ready(() => {
   function OnSelectionChange() {
     const device = trackedDevices.findDevice(listOfDevices[listOfDevices.selectedIndex].text);
     chartData.labels = device.timeData;
-    chartData.datasets[0].data = device.DangerData;
-    chartData.datasets[1].data = device.AirQualityData;
+    chartData.datasets[0].data = device.AirData;
+    chartData.datasets[1].data = device.DangerData;
     myLineChart.update();
   }
   listOfDevices.addEventListener('change', OnSelectionChange, false);
@@ -140,7 +140,7 @@ $(document).ready(() => {
       console.log(messageData);
 
       // time and either temperature or humidity are required
-      if (!messageData.MessageDate || (!messageData.IotData.Danger && !messageData.IotData.AirQuality)) {
+      if (!messageData.MessageDate || (!messageData.IotData.AirQualityIndex && !messageData.IotData.Danger)) {
         return;
       }
 
@@ -148,13 +148,13 @@ $(document).ready(() => {
       const existingDeviceData = trackedDevices.findDevice(messageData.DeviceId);
 
       if (existingDeviceData) {
-        existingDeviceData.addData(messageData.MessageDate, messageData.IotData.Danger, messageData.IotData.AirQualityIndex);
+        existingDeviceData.addData(messageData.MessageDate, messageData.IotData.AirQualityIndex,messageData.IotData.Danger);
       } else {
         const newDeviceData = new DeviceData(messageData.DeviceId);
         trackedDevices.devices.push(newDeviceData);
         const numDevices = trackedDevices.getDevicesCount();
         deviceCount.innerText = numDevices === 1 ? `${numDevices} device` : `${numDevices} devices`;
-        newDeviceData.addData(messageData.MessageDate, messageData.IotData.Danger, messageData.IotData.AirQualityIndex);
+        newDeviceData.addData(messageData.MessageDate, messageData.IotData.AirQualityIndex,messageData.IotData.Danger);
 
         // add device to the UI list
         const node = document.createElement('option');
