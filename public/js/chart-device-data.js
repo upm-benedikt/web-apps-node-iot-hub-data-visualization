@@ -12,18 +12,18 @@ $(document).ready(() => {
       this.deviceId = deviceId;
       this.maxLen = 50;
       this.timeData = new Array(this.maxLen);
-      this.temperatureData = new Array(this.maxLen);
+      this.DangerData = new Array(this.maxLen);
       this.AirQualityIndex = new Array(this.maxLen);
     }
 
-    addData(time, temperature, AirQualityIndex) {
+    addData(time, Danger, AirQualityIndex) {
       this.timeData.push(time);
-      this.temperatureData.push(temperature);
+      this.DangerData.push(Danger);
       this.AirQualityIndex.push(AirQualityIndex || null);
 
       if (this.timeData.length > this.maxLen) {
         this.timeData.shift();
-        this.temperatureData.shift();
+        this.DangerData.shift();
         this.AirQualityIndex.shift();
       }
     }
@@ -58,8 +58,8 @@ $(document).ready(() => {
     datasets: [
       {
         fill: false,
-        label: 'Temperature',
-        yAxisID: 'Temperature',
+        label: 'Danger',
+        yAxisID: 'bool',
         borderColor: 'rgba(255, 204, 0, 1)',
         pointBoarderColor: 'rgba(255, 204, 0, 1)',
         backgroundColor: 'rgba(255, 204, 0, 0.4)',
@@ -84,10 +84,10 @@ $(document).ready(() => {
   const chartOptions = {
     scales: {
       yAxes: [{
-        id: 'Temperature',
+        id: 'Danger',
         type: 'linear',
         scaleLabel: {
-          labelString: 'Temperature (ºC)',
+          labelString: 'Danger (ºC)',
           display: true,
         },
         position: 'left',
@@ -122,7 +122,7 @@ $(document).ready(() => {
   function OnSelectionChange() {
     const device = trackedDevices.findDevice(listOfDevices[listOfDevices.selectedIndex].text);
     chartData.labels = device.timeData;
-    chartData.datasets[0].data = device.temperatureData;
+    chartData.datasets[0].data = device.DangerData;
     chartData.datasets[1].data = device.AirQualityIndex;
     myLineChart.update();
   }
@@ -140,7 +140,7 @@ $(document).ready(() => {
       console.log(messageData);
 
       // time and either temperature or humidity are required
-      if (!messageData.MessageDate || (!messageData.IotData.temperature && !messageData.IotData.AirQuality)) {
+      if (!messageData.MessageDate || (!messageData.IotData.Danger && !messageData.IotData.AirQuality)) {
         return;
       }
 
@@ -148,13 +148,13 @@ $(document).ready(() => {
       const existingDeviceData = trackedDevices.findDevice(messageData.DeviceId);
 
       if (existingDeviceData) {
-        existingDeviceData.addData(messageData.MessageDate, messageData.IotData.temperature, messageData.IotData.AirQualityIndex);
+        existingDeviceData.addData(messageData.MessageDate, messageData.IotData.Danger, messageData.IotData.AirQualityIndex);
       } else {
         const newDeviceData = new DeviceData(messageData.DeviceId);
         trackedDevices.devices.push(newDeviceData);
         const numDevices = trackedDevices.getDevicesCount();
         deviceCount.innerText = numDevices === 1 ? `${numDevices} device` : `${numDevices} devices`;
-        newDeviceData.addData(messageData.MessageDate, messageData.IotData.temperature, messageData.IotData.AirQualityIndex);
+        newDeviceData.addData(messageData.MessageDate, messageData.IotData.Danger, messageData.IotData.AirQualityIndex);
 
         // add device to the UI list
         const node = document.createElement('option');
