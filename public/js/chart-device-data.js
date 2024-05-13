@@ -13,18 +13,18 @@ $(document).ready(() => {
       this.maxLen = 50;
       this.timeData = new Array(this.maxLen);
       this.DangerData = new Array(this.maxLen);
-      this.AirQualityIndex = new Array(this.maxLen);
+      this.AirQualityData = new Array(this.maxLen);
     }
 
     addData(time, Danger, AirQualityIndex) {
       this.timeData.push(time);
-      this.DangerData.push(Danger);
-      this.AirQualityIndex.push(AirQualityIndex || null);
+      this.DangerData.push(Danger || null);
+      this.AirQualityData.push(AirQualityIndex);
 
       if (this.timeData.length > this.maxLen) {
         this.timeData.shift();
         this.DangerData.shift();
-        this.AirQualityIndex.shift();
+        this.AirQualityData.shift();
       }
     }
   }
@@ -123,7 +123,7 @@ $(document).ready(() => {
     const device = trackedDevices.findDevice(listOfDevices[listOfDevices.selectedIndex].text);
     chartData.labels = device.timeData;
     chartData.datasets[0].data = device.DangerData;
-    chartData.datasets[1].data = device.AirQualityIndex;
+    chartData.datasets[1].data = device.AirQualityData;
     myLineChart.update();
   }
   listOfDevices.addEventListener('change', OnSelectionChange, false);
