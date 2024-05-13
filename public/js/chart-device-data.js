@@ -13,18 +13,18 @@ $(document).ready(() => {
       this.maxLen = 50;
       this.timeData = new Array(this.maxLen);
       this.temperatureData = new Array(this.maxLen);
-      this.AirQuality = new Array(this.maxLen);
+      this.AirQualityIndex = new Array(this.maxLen);
     }
 
     addData(time, temperature, Air-Quality) {
       this.timeData.push(time);
       this.temperatureData.push(temperature);
-      this.AirQuality.push(Air-Quality || null);
+      this.AirQualityIndex.push(Air-Quality || null);
 
       if (this.timeData.length > this.maxLen) {
         this.timeData.shift();
         this.temperatureData.shift();
-        this.AirQuality.shift();
+        this.AirQualityIndex.shift();
       }
     }
   }
@@ -123,7 +123,7 @@ $(document).ready(() => {
     const device = trackedDevices.findDevice(listOfDevices[listOfDevices.selectedIndex].text);
     chartData.labels = device.timeData;
     chartData.datasets[0].data = device.temperatureData;
-    chartData.datasets[1].data = device.AirQuality;
+    chartData.datasets[1].data = device.AirQualityIndex;
     myLineChart.update();
   }
   listOfDevices.addEventListener('change', OnSelectionChange, false);
@@ -148,13 +148,13 @@ $(document).ready(() => {
       const existingDeviceData = trackedDevices.findDevice(messageData.DeviceId);
 
       if (existingDeviceData) {
-        existingDeviceData.addData(messageData.MessageDate, messageData.IotData.temperature, messageData.IotData.AirQuality);
+        existingDeviceData.addData(messageData.MessageDate, messageData.IotData.temperature, messageData.IotData.AirQualityIndex);
       } else {
         const newDeviceData = new DeviceData(messageData.DeviceId);
         trackedDevices.devices.push(newDeviceData);
         const numDevices = trackedDevices.getDevicesCount();
         deviceCount.innerText = numDevices === 1 ? `${numDevices} device` : `${numDevices} devices`;
-        newDeviceData.addData(messageData.MessageDate, messageData.IotData.temperature, messageData.IotData.AirQuality);
+        newDeviceData.addData(messageData.MessageDate, messageData.IotData.temperature, messageData.IotData.AirQualityIndex);
 
         // add device to the UI list
         const node = document.createElement('option');
