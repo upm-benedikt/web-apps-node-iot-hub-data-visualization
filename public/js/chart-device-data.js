@@ -16,10 +16,10 @@ $(document).ready(() => {
       this.AirQualityIndex = new Array(this.maxLen);
     }
 
-    addData(time, temperature, Air-Quality) {
+    addData(time, temperature, AirQualityIndex) {
       this.timeData.push(time);
       this.temperatureData.push(temperature);
-      this.AirQualityIndex.push(Air-Quality || null);
+      this.AirQualityIndex.push(AirQualityIndex || null);
 
       if (this.timeData.length > this.maxLen) {
         this.timeData.shift();
