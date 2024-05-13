@@ -120,6 +120,7 @@ $(document).ready(() => {
             console.log(messageData);
 
             if (!messageData.MessageDate || (!messageData.IotData.AirQualityIndex && !messageData.IotData.Danger)) {
+                console.log('Invalid message format:', messageData);
                 return;
             }
 
