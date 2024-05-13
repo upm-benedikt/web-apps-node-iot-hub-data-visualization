@@ -1,178 +1,154 @@
-/* eslint-disable max-classes-per-file */
-/* eslint-disable no-restricted-globals */
-/* eslint-disable no-undef */
 $(document).ready(() => {
-  // if deployed to a site supporting SSL, use wss://
-  const protocol = document.location.protocol.startsWith('https') ? 'wss://' : 'ws://';
-  const webSocket = new WebSocket(protocol + location.host);
+    // if deployed to a site supporting SSL, use wss://
+    const protocol = document.location.protocol.startsWith('https') ? 'wss://' : 'ws://';
+    const webSocket = new WebSocket(protocol + location.host);
 
-  // A class for holding the last N points of telemetry for a device
-  class DeviceData {
-    constructor(deviceId) {
-      this.deviceId = deviceId;
-      this.maxLen = 50;
-      this.timeData = new Array(this.maxLen);
-      this.phData = new Array(this.maxLen);
-      this.precipitateData = new Array(this.maxLen);
-    }
-
-    addData(time, AirQualityIndex, Danger) {
-      this.timeData.push(time);
-      this.AirData.push(ph);
-      this.DangerData.push(precipitate);
-
-      if (this.timeData.length > this.maxLen) {
-        this.timeData.shift();
-        this.AirData.shift();
-        this.DangerData.shift();
-      }
-    }
-  }
-
-  // All the devices in the list (those that have been sending telemetry)
-  class TrackedDevices {
-    constructor() {
-      this.devices = [];
-    }
-
-    // Find a device based on its Id
-    findDevice(deviceId) {
-      for (let i = 0; i < this.devices.length; ++i) {
-        if (this.devices[i].deviceId === deviceId) {
-          return this.devices[i];
+    class DeviceData {
+        constructor(deviceId) {
+            this.deviceId = deviceId;
+            this.maxLen = 50;
+            this.timeData = new Array(this.maxLen);
+            this.AirQualityData = new Array(this.maxLen); // Changed from phData to AirQualityData
+            this.DangerData = new Array(this.maxLen); // Changed from precipitateData to DangerData
         }
-      }
 
-      return undefined;
+        addData(time, AirQualityIndex, Danger) {
+            this.timeData.push(time);
+            this.AirQualityData.push(AirQualityIndex);
+            this.DangerData.push(Danger || null);
+
+            if (this.timeData.length > this.maxLen) {
+                this.timeData.shift();
+                this.AirQualityData.shift();
+                this.DangerData.shift();
+            }
+        }
     }
 
-    getDevicesCount() {
-      return this.devices.length;
+    class TrackedDevices {
+        constructor() {
+            this.devices = [];
+        }
+
+        findDevice(deviceId) {
+            return this.devices.find(device => device.deviceId === deviceId);
+        }
+
+        getDevicesCount() {
+            return this.devices.length;
+        }
     }
-  }
 
-  const trackedDevices = new TrackedDevices();
+    const trackedDevices = new TrackedDevices();
 
-  // Define the chart axes
-  const chartData = {
-    datasets: [
-      {
-        fill: false,
-        label: 'Air',
-        yAxisID: 'Air',
-        borderColor: 'rgba(255, 204, 0, 1)',
-        pointBoarderColor: 'rgba(255, 204, 0, 1)',
-        backgroundColor: 'rgba(255, 204, 0, 0.4)',
-        pointHoverBackgroundColor: 'rgba(255, 204, 0, 1)',
-        pointHoverBorderColor: 'rgba(255, 204, 0, 1)',
-        spanGaps: true,
-      },
-      {
-        fill: false,
-        label: 'Danger',
-        yAxisID: 'Danger',
-        borderColor: 'rgba(0, 0, 254, 1)',
-        pointBoarderColor: 'rgba(0, 0, 254, 1)',
-        backgroundColor: 'rgba(0, 0, 254, 1)',
-        pointHoverBackgroundColor: 'rgba(0, 0, 254, 1)',
-        pointHoverBorderColor: 'rgba(0, 0, 254, 1)',
-        spanGaps: true,
-      }
-    ]
-  };
+    const chartData = {
+        datasets: [
+            {
+                fill: false,
+                label: 'Air-Quality',
+                yAxisID: 'Air-Quality',
+                borderColor: 'rgba(255, 204, 0, 1)',
+                pointBorderColor: 'rgba(255, 204, 0, 1)',
+                backgroundColor: 'rgba(255, 204, 0, 0.4)',
+                pointHoverBackgroundColor: 'rgba(255, 204, 0, 1)',
+                pointHoverBorderColor: 'rgba(255, 204, 0, 1)',
+                spanGaps: true,
+            },
+            {
+                fill: false,
+                label: 'Danger',
+                yAxisID: 'bool',
+                borderColor: 'rgba(0, 0, 254, 1)',
+                pointBorderColor: 'rgba(0, 0, 254, 1)',
+                backgroundColor: 'rgba(0, 0, 254, 1)',
+                pointHoverBackgroundColor: 'rgba(0, 0, 254, 1)',
+                pointHoverBorderColor: 'rgba(0, 0, 254, 1)',
+                spanGaps: true,
+            },
+        ],
+    };
 
-  const chartOptions = {
-    scales: {
-      yAxes: [{
-        id: 'Air',
-        type: 'linear',
-        scaleLabel: {
-          labelString: 'Air',
-          display: true,
+    const chartOptions = {
+        scales: {
+            yAxes: [
+                {
+                    id: 'Air-Quality',
+                    type: 'linear',
+                    scaleLabel: {
+                        labelString: 'Air-Quality',
+                        display: true,
+                    },
+                    position: 'left',
+                },
+                {
+                    id: 'bool',
+                    type: 'linear',
+                    scaleLabel: {
+                        labelString: 'Danger',
+                        display: true,
+                    },
+                    position: 'right',
+                },
+            ],
         },
-        position: 'left',
-      },
-      {
-        id: 'Danger',
-        type: 'linear',
-        scaleLabel: {
-          labelString: 'Danger',
-          display: true,
-        },
-        position: 'left',
-      }]
-    }
-  };
+    };
 
-  // Get the context of the canvas element we want to select
-  const ctx = document.getElementById('iotChart').getContext('2d');
-  const myLineChart = new Chart(
-    ctx,
-    {
-      type: 'line',
-      data: chartData,
-      options: chartOptions,
+    const ctx = document.getElementById('iotChart').getContext('2d');
+    const myLineChart = new Chart(ctx, {
+        type: 'line',
+        data: chartData,
+        options: chartOptions,
     });
 
-  // Manage a list of devices in the UI, and update which device data the chart is showing
-  // based on selection
-  let needsAutoSelect = true;
-  const deviceCount = document.getElementById('deviceCount');
-  const listOfDevices = document.getElementById('listOfDevices');
-  function OnSelectionChange() {
-    const device = trackedDevices.findDevice(listOfDevices[listOfDevices.selectedIndex].text);
-    chartData.labels = device.timeData;
-    chartData.datasets[0].data = device.AirData;
-    chartData.datasets[1].data = device.DangerData;
-    myLineChart.update();
-  }
-  listOfDevices.addEventListener('change', OnSelectionChange, false);
+    let needsAutoSelect = true;
+    const deviceCount = document.getElementById('deviceCount');
+    const listOfDevices = document.getElementById('listOfDevices');
 
-  // When a web socket message arrives:
-  // 1. Unpack it
-  // 2. Validate it has date/time and temperature
-  // 3. Find or create a cached device to hold the telemetry data
-  // 4. Append the telemetry data
-  // 5. Update the chart UI
-  webSocket.onmessage = function onMessage(message) {
-    try {
-      const messageData = JSON.parse(message.data);
-      console.log(messageData);
-
-      // time and either temperature or humidity are required
-      if (!messageData.MessageDate || (!messageData.IotData.AirQualityIndex && !messageData.IotData.Danger)) {
-        return;
-      }
-
-      // find or add device to list of tracked devices
-      const existingDeviceData = trackedDevices.findDevice(messageData.DeviceId);
-
-      if (existingDeviceData) {
-        existingDeviceData.addData(messageData.MessageDate, messageData.IotData.AirQualityIndex,messageData.IotData.Danger);
-      } else {
-        const newDeviceData = new DeviceData(messageData.DeviceId);
-        trackedDevices.devices.push(newDeviceData);
-        const numDevices = trackedDevices.getDevicesCount();
-        deviceCount.innerText = numDevices === 1 ? `${numDevices} device` : `${numDevices} devices`;
-        newDeviceData.addData(messageData.MessageDate, messageData.IotData.AirQualityIndex,messageData.IotData.Danger);
-
-        // add device to the UI list
-        const node = document.createElement('option');
-        const nodeText = document.createTextNode(messageData.DeviceId);
-        node.appendChild(nodeText);
-        listOfDevices.appendChild(node);
-
-        // if this is the first device being discovered, auto-select it
-        if (needsAutoSelect) {
-          needsAutoSelect = false;
-          listOfDevices.selectedIndex = 0;
-          OnSelectionChange();
-        }
-      }
-
-      myLineChart.update();
-    } catch (err) {
-      console.error(err);
+    function OnSelectionChange() {
+        const device = trackedDevices.findDevice(listOfDevices[listOfDevices.selectedIndex].text);
+        chartData.labels = device.timeData;
+        chartData.datasets[0].data = device.AirQualityData;
+        chartData.datasets[1].data = device.DangerData;
+        myLineChart.update();
     }
-  };
+
+    listOfDevices.addEventListener('change', OnSelectionChange, false);
+
+    webSocket.onmessage = function onMessage(message) {
+        try {
+            const messageData = JSON.parse(message.data);
+            console.log(messageData);
+
+            if (!messageData.MessageDate || (!messageData.IotData.AirQualityIndex && !messageData.IotData.Danger)) {
+                return;
+            }
+
+            let existingDeviceData = trackedDevices.findDevice(messageData.DeviceId);
+
+            if (!existingDeviceData) {
+                const newDeviceData = new DeviceData(messageData.DeviceId);
+                trackedDevices.devices.push(newDeviceData);
+                existingDeviceData = newDeviceData;
+
+                const numDevices = trackedDevices.getDevicesCount();
+                deviceCount.innerText = numDevices === 1 ? `${numDevices} device` : `${numDevices} devices`;
+
+                const node = document.createElement('option');
+                const nodeText = document.createTextNode(messageData.DeviceId);
+                node.appendChild(nodeText);
+                listOfDevices.appendChild(node);
+
+                if (needsAutoSelect) {
+                    needsAutoSelect = false;
+                    listOfDevices.selectedIndex = 0;
+                    OnSelectionChange();
+                }
+            }
+
+            existingDeviceData.addData(messageData.MessageDate, messageData.IotData.AirQualityIndex, messageData.IotData.Danger);
+            myLineChart.update();
+        } catch (err) {
+            console.error(err);
+        }
+    };
 });
