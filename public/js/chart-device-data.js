@@ -8,19 +8,24 @@ $(document).ready(() => {
             this.deviceId = deviceId;
             this.maxLen = 50;
             this.timeData = new Array(this.maxLen);
-            this.AirQualityData = new Array(this.maxLen); // Changed from phData to AirQualityData
+            // this.HumidityData = new Array(this.maxLen); // Changed from phData to AirQualityData
             this.TemperatureData = new Array(this.maxLen); // Changed from precipitateData to DangerData
+            this.UVLevelData = new Array(this.maxLen)
+
+           
         }
 
-        addData(time, AQI, temperature) {
+        addData(time, temperature, humidity, uvLevel) {
             this.timeData.push(time);
-            this.AirQualityData.push(AQI);
+            // this.HumidityData.push(humidity);
+            this.UVLevelData.push(uvLevel)
             this.TemperatureData.push(Temperature || null);
 
             if (this.timeData.length > this.maxLen) {
                 this.timeData.shift();
-                this.AirQualityData.shift();
+                // this.HumidityData.shift();
                 this.TemperatureData.shift();
+                this.UVLevelData.shift();
             }
         }
     }
@@ -45,8 +50,8 @@ $(document).ready(() => {
         datasets: [
             {
                 fill: false,
-                label: 'Air-Quality',
-                yAxisID: 'Air-Quality',
+                label: 'UV Level',
+                yAxisID: 'UV Level',
                 borderColor: 'rgba(255, 204, 0, 1)',
                 pointBorderColor: 'rgba(255, 204, 0, 1)',
                 backgroundColor: 'rgba(255, 204, 0, 0.4)',
@@ -72,10 +77,10 @@ $(document).ready(() => {
         scales: {
             yAxes: [
                 {
-                    id: 'Air-Quality',
+                    id: 'UV Level',
                     type: 'linear',
                     scaleLabel: {
-                        labelString: 'Air-Quality',
+                        labelString: 'UV Level',
                         display: true,
                     },
                     position: 'left',
@@ -107,7 +112,7 @@ $(document).ready(() => {
     function OnSelectionChange() {
         const device = trackedDevices.findDevice(listOfDevices[listOfDevices.selectedIndex].text);
         chartData.labels = device.timeData;
-        chartData.datasets[0].data = device.AirQualityData;
+        chartData.datasets[0].data = device.UVLevelData;
         chartData.datasets[1].data = device.TemperatureData;
         myLineChart.update();
     }
@@ -119,7 +124,7 @@ $(document).ready(() => {
             const messageData = JSON.parse(message.data);
             console.log(messageData);
 
-            if (!messageData.MessageDate || (!messageData.IotData.AQI && !messageData.IotData.temperature)) {
+            if (!messageData.MessageDate || (!messageData.IotData.uvLevel && !messageData.IotData.temperature)) {
                 console.log('Invalid message format:', messageData);
                 return;
             }
@@ -146,7 +151,7 @@ $(document).ready(() => {
                 }
             }
 
-            existingDeviceData.addData(messageData.MessageDate, messageData.IotData.AQI, messageData.IotData.temperature);
+            existingDeviceData.addData(messageData.MessageDate, messageData.IotData.uvLevel, messageData.IotData.temperature);
             myLineChart.update();
         } catch (err) {
             console.error(err);
