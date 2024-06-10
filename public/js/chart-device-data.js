@@ -9,18 +9,18 @@ $(document).ready(() => {
             this.maxLen = 50;
             this.timeData = new Array(this.maxLen);
             this.AirQualityData = new Array(this.maxLen); // Changed from phData to AirQualityData
-            this.DangerData = new Array(this.maxLen); // Changed from precipitateData to DangerData
+            this.TemperatureData = new Array(this.maxLen); // Changed from precipitateData to DangerData
         }
 
-        addData(time, AirQualityIndex, Danger) {
+        addData(time, AQI, temperature) {
             this.timeData.push(time);
-            this.AirQualityData.push(AirQualityIndex);
-            this.DangerData.push(Danger || null);
+            this.AirQualityData.push(AQI);
+            this.TemperatureData.push(Temperature || null);
 
             if (this.timeData.length > this.maxLen) {
                 this.timeData.shift();
                 this.AirQualityData.shift();
-                this.DangerData.shift();
+                this.TemperatureData.shift();
             }
         }
     }
@@ -56,8 +56,8 @@ $(document).ready(() => {
             },
             {
                 fill: false,
-                label: 'Danger',
-                yAxisID: 'bool',
+                label: 'Temperature',
+                yAxisID: 'Temperature',
                 borderColor: 'rgba(0, 0, 254, 1)',
                 pointBorderColor: 'rgba(0, 0, 254, 1)',
                 backgroundColor: 'rgba(0, 0, 254, 1)',
@@ -84,7 +84,7 @@ $(document).ready(() => {
                     id: 'bool',
                     type: 'linear',
                     scaleLabel: {
-                        labelString: 'Danger',
+                        labelString: 'Temperature',
                         display: true,
                     },
                     position: 'right',
@@ -108,7 +108,7 @@ $(document).ready(() => {
         const device = trackedDevices.findDevice(listOfDevices[listOfDevices.selectedIndex].text);
         chartData.labels = device.timeData;
         chartData.datasets[0].data = device.AirQualityData;
-        chartData.datasets[1].data = device.DangerData;
+        chartData.datasets[1].data = device.TemperatureData;
         myLineChart.update();
     }
 
@@ -119,7 +119,7 @@ $(document).ready(() => {
             const messageData = JSON.parse(message.data);
             console.log(messageData);
 
-            if (!messageData.MessageDate || (!messageData.IotData.AirQualityIndex && !messageData.IotData.Danger)) {
+            if (!messageData.MessageDate || (!messageData.IotData.AQI && !messageData.IotData.temperature)) {
                 console.log('Invalid message format:', messageData);
                 return;
             }
@@ -146,7 +146,7 @@ $(document).ready(() => {
                 }
             }
 
-            existingDeviceData.addData(messageData.MessageDate, messageData.IotData.AirQualityIndex, messageData.IotData.Danger);
+            existingDeviceData.addData(messageData.MessageDate, messageData.IotData.AQI, messageData.IotData.temperature);
             myLineChart.update();
         } catch (err) {
             console.error(err);
